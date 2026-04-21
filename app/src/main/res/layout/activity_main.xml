@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:gravity="center_horizontal">
+
+        <TextView
+            android:id="@+id/appName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="OTP Forwarder"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Configuration"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/editForwardTo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Forward to Number"
+            android:text="+917021979242"
+            android:inputType="phone"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/editFilterText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Filter Keyword (e.g. card ending 0366)"
+            android:inputType="text"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/editPrefixText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Message Prefix"
+            android:inputType="text"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save Config"
+            android:layout_marginBottom="24dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#CCCCCC"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Permission Status:"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/statusReceiveSms"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="RECEIVE_SMS: Checking..."
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/statusReadSms"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="READ_SMS: Checking..."
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/statusSendSms"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SEND_SMS: Checking..."
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/statusNotifications"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="NOTIFICATIONS: Checking..."
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnRefresh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Refresh Status"
+            android:layout_marginTop="16dp" />
+
+    </LinearLayout>
+</ScrollView>
