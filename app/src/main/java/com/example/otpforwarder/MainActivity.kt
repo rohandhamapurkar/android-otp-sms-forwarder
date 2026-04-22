@@ -12,6 +12,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,8 +27,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusNotifications: TextView
     
     private lateinit var editForwardTo: EditText
-    private lateinit var editFilterText: EditText
     private lateinit var editPrefixText: EditText
+    private lateinit var editFilterText: EditText
+    private lateinit var btnAddFilter: Button
+    private lateinit var chipGroupFilters: ChipGroup
+    
+    private val filtersList = mutableListOf<String>()
+    private val gson = Gson()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,23 +45,39 @@ class MainActivity : AppCompatActivity() {
         statusNotifications = findViewById(R.id.statusNotifications)
         
         editForwardTo = findViewById(R.id.editForwardTo)
-        editFilterText = findViewById(R.id.editFilterText)
         editPrefixText = findViewById(R.id.editPrefixText)
+        editFilterText = findViewById(R.id.editFilterText)
+        btnAddFilter = findViewById(R.id.btnAddFilter)
+        chipGroupFilters = findViewById(R.id.chipGroupFilters)
 
         val sharedPrefs = getSharedPreferences("forwarder_prefs", Context.MODE_PRIVATE)
         editForwardTo.setText(sharedPrefs.getString("forward_to", ""))
-        editFilterText.setText(sharedPrefs.getString("filter_text", ""))
         editPrefixText.setText(sharedPrefs.getString("prefix_text", "my lord here you go:"))
+        
+        val savedFiltersJson = sharedPrefs.getString("filter_texts_json", "[]")
+        val savedFiltersArray: Array<String> = gson.fromJson(savedFiltersJson, Array<String>::class.java)
+        filtersList.addAll(savedFiltersArray)
+        
+        filtersList.forEach { addChipToGroup(it) }
+
+        btnAddFilter.setOnClickListener {
+            val text = editFilterText.text.toString().trim()
+            if (text.isNotEmpty() && !filtersList.contains(text)) {
+                filtersList.add(text)
+                addChipToGroup(text)
+                editFilterText.text.clear()
+            }
+        }
 
         findViewById<Button>(R.id.btnSave).setOnClickListener {
             val forwardTo = editForwardTo.text.toString()
-            val filterText = editFilterText.text.toString()
             val prefixText = editPrefixText.text.toString()
+            val filtersJson = gson.toJson(filtersList)
             
             sharedPrefs.edit().apply {
                 putString("forward_to", forwardTo)
-                putString("filter_text", filterText)
                 putString("prefix_text", prefixText)
+                putString("filter_texts_json", filtersJson)
                 apply()
             }
             Toast.makeText(this, "Configuration Saved!", Toast.LENGTH_SHORT).show()
@@ -64,6 +89,17 @@ class MainActivity : AppCompatActivity() {
 
         updatePermissionStatus()
         requestSmsPermissions()
+    }
+
+    private fun addChipToGroup(filterText: String) {
+        val chip = Chip(this)
+        chip.text = filterText
+        chip.isCloseIconVisible = true
+        chip.setOnCloseIconClickListener {
+            chipGroupFilters.removeView(chip)
+            filtersList.remove(filterText)
+        }
+        chipGroupFilters.addView(chip)
     }
 
     private fun updatePermissionStatus() {

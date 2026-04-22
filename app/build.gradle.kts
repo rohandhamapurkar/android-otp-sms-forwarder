@@ -21,7 +21,7 @@ android {
             )
         }
         debug {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -42,6 +42,8 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx.v1120)
-    implementation(libs.androidx.appcompat) // 🔥 THIS FIXES EVERYTHING
+    implementation(libs.androidx.appcompat)
+    implementation(libs.google.material)
+    implementation(libs.google.gson)
     testImplementation("junit:junit:4.13.2")
 }
