@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
 
         val sharedPrefs = getSharedPreferences("forwarder_prefs", Context.MODE_PRIVATE)
         editForwardTo.setText(sharedPrefs.getString("forward_to", ""))
-        editPrefixText.setText(sharedPrefs.getString("prefix_text", "my lord here you go:"))
+        editPrefixText.setText(sharedPrefs.getString("prefix_text", "my lord here you go"))
         
         val savedFiltersJson = sharedPrefs.getString("filter_texts_json", "[]")
         val savedFiltersArray: Array<String> = gson.fromJson(savedFiltersJson, Array<String>::class.java)

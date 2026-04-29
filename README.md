@@ -1,10 +1,10 @@
 # OTP Forwarder
 
-OTP Forwarder is an Android application designed to automatically detect and forward 6-digit One-Time Passwords (OTPs) from incoming SMS messages to a pre-configured phone number. It allows users to set up specific filters to ensure only relevant messages are forwarded.
+OTP Forwarder is an Android application designed to automatically detect and forward 4 or 6-digit One-Time Passwords (OTPs) from incoming SMS messages to a pre-configured phone number. It allows users to set up specific filters to ensure only relevant messages are forwarded.
 
 ## 🚀 Features
 
-- **Automatic OTP Detection**: Uses regex to identify 6-digit codes in incoming SMS.
+- **Automatic OTP Detection**: Uses regex to identify 4 and 6-digit codes in incoming SMS (prioritizing 6-digit matches).
 - **Keyword Filtering**: Only forwards messages containing specific keywords (e.g., "Bank", "Login", "Verification").
 - **Custom Forwarding**: Set a target phone number and an optional prefix for the forwarded message.
 - **Permission Management**: Built-in UI to track and request necessary SMS and notification permissions.

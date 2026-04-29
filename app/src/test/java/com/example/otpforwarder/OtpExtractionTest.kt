@@ -36,14 +36,35 @@ class OtpExtractionTest {
         assertNull(otp)
     }
 
+    @Test
+    fun testOtpExtractionWithFourDigits() {
+        val message = "Your login code is 1234 for card ending 0366."
+        val filter = "card ending 0366"
+        
+        val otp = extractOtpLogic(message, filter)
+        assertEquals("1234", otp)
+    }
+
+    @Test
+    fun testOtpExtractionSixDigitsPreferredOverFour() {
+        // If both exist, 6 digits should be picked first based on logic
+        val message = "Code 123456 and extra 7890 for card ending 0366."
+        val filter = "card ending 0366"
+        
+        val otp = extractOtpLogic(message, filter)
+        assertEquals("123456", otp)
+    }
+
     // This is a copy of the logic in SmsReceiver for testing purposes.
     // In a real project, you'd move this to a separate Utility class.
     private fun extractOtpLogic(message: String, filter: String): String? {
         if (!message.contains(filter, ignoreCase = true)) {
             return null
         }
-        val otpRegex = Regex("""\b(\d{6})\b""")
-        val matchResult = otpRegex.find(message)
-        return matchResult?.groupValues?.get(1)
+        val otp6Regex = Regex("""\b(\d{6})\b""")
+        val otp4Regex = Regex("""\b(\d{4})\b""")
+        
+        return otp6Regex.find(message)?.groupValues?.get(1)
+            ?: otp4Regex.find(message)?.groupValues?.get(1)
     }
 }

@@ -15,8 +15,9 @@ import com.google.gson.reflect.TypeToken
 class SmsReceiver : BroadcastReceiver() {
 
     companion object {
-        // Pre-compile the regex once to save CPU cycles on every message
-        private val OTP_PATTERN = Regex("""\b(\d{6})\b""")
+        // Pre-compile the regexes once to save CPU cycles on every message
+        private val OTP_6_PATTERN = Regex("""\b(\d{6})\b""")
+        private val OTP_4_PATTERN = Regex("""\b(\d{4})\b""")
         private val gson = Gson()
     }
 
@@ -27,7 +28,7 @@ class SmsReceiver : BroadcastReceiver() {
         
         val sharedPrefs = context.getSharedPreferences("forwarder_prefs", Context.MODE_PRIVATE)
         val forwardTo = sharedPrefs.getString("forward_to", "") ?: ""
-        val prefixText = sharedPrefs.getString("prefix_text", "my lord here you go:") ?: ""
+        val prefixText = sharedPrefs.getString("prefix_text", "my lord here you go") ?: ""
         
         val filtersJson = sharedPrefs.getString("filter_texts_json", "[]")
         val filtersArray: Array<String> = gson.fromJson(filtersJson, Array<String>::class.java)
@@ -39,12 +40,16 @@ class SmsReceiver : BroadcastReceiver() {
             val body = sms.displayMessageBody ?: continue
             
             // Check if any of the filters match
-            val isMatch = filters.any { body.contains(it, ignoreCase = true) }
+            val matchedFilter = filters.find { body.contains(it, ignoreCase = true) }
             
-            if (isMatch) {
-                val otp = OTP_PATTERN.find(body)?.groupValues?.get(1)
+            if (matchedFilter != null) {
+                // Check for 6-digit OTP first, then 4-digit OTP
+                val otp = OTP_6_PATTERN.find(body)?.groupValues?.get(1)
+                    ?: OTP_4_PATTERN.find(body)?.groupValues?.get(1)
+
                 if (otp != null) {
-                    forwardSms(context, forwardTo, "$prefixText $otp")
+                    val finalMessage = "${prefixText.removeSuffix(":")} ($matchedFilter): $otp"
+                    forwardSms(context, forwardTo, finalMessage)
                     // Found the OTP, no need to process remaining parts of this intent
                     break
                 }
