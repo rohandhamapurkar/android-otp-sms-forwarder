@@ -29,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var editForwardTo: EditText
     private lateinit var editPrefixText: EditText
     private lateinit var editFilterText: EditText
+    private lateinit var checkIncludeFilter: android.widget.CheckBox
     private lateinit var btnAddFilter: Button
     private lateinit var chipGroupFilters: ChipGroup
     
@@ -46,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         
         editForwardTo = findViewById(R.id.editForwardTo)
         editPrefixText = findViewById(R.id.editPrefixText)
+        checkIncludeFilter = findViewById(R.id.checkIncludeFilter)
         editFilterText = findViewById(R.id.editFilterText)
         btnAddFilter = findViewById(R.id.btnAddFilter)
         chipGroupFilters = findViewById(R.id.chipGroupFilters)
@@ -53,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         val sharedPrefs = getSharedPreferences("forwarder_prefs", Context.MODE_PRIVATE)
         editForwardTo.setText(sharedPrefs.getString("forward_to", ""))
         editPrefixText.setText(sharedPrefs.getString("prefix_text", "my lord here you go"))
+        checkIncludeFilter.isChecked = sharedPrefs.getBoolean("include_filter", true)
         
         val savedFiltersJson = sharedPrefs.getString("filter_texts_json", "[]")
         val savedFiltersArray: Array<String> = gson.fromJson(savedFiltersJson, Array<String>::class.java)
@@ -72,11 +75,13 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnSave).setOnClickListener {
             val forwardTo = editForwardTo.text.toString()
             val prefixText = editPrefixText.text.toString()
+            val includeFilter = checkIncludeFilter.isChecked
             val filtersJson = gson.toJson(filtersList)
             
             sharedPrefs.edit().apply {
                 putString("forward_to", forwardTo)
                 putString("prefix_text", prefixText)
+                putBoolean("include_filter", includeFilter)
                 putString("filter_texts_json", filtersJson)
                 apply()
             }

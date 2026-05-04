@@ -29,6 +29,7 @@ class SmsReceiver : BroadcastReceiver() {
         val sharedPrefs = context.getSharedPreferences("forwarder_prefs", Context.MODE_PRIVATE)
         val forwardTo = sharedPrefs.getString("forward_to", "") ?: ""
         val prefixText = sharedPrefs.getString("prefix_text", "my lord here you go") ?: ""
+        val includeFilter = sharedPrefs.getBoolean("include_filter", true)
         
         val filtersJson = sharedPrefs.getString("filter_texts_json", "[]")
         val filtersArray: Array<String> = gson.fromJson(filtersJson, Array<String>::class.java)
@@ -48,7 +49,12 @@ class SmsReceiver : BroadcastReceiver() {
                     ?: OTP_4_PATTERN.find(body)?.groupValues?.get(1)
 
                 if (otp != null) {
-                    val finalMessage = "${prefixText.removeSuffix(":")} ($matchedFilter): $otp"
+                    val cleanPrefix = prefixText.trim().removeSuffix(":")
+                    val finalMessage = if (includeFilter) {
+                        "$cleanPrefix ($matchedFilter): $otp"
+                    } else {
+                        "$cleanPrefix: $otp"
+                    }
                     forwardSms(context, forwardTo, finalMessage)
                     // Found the OTP, no need to process remaining parts of this intent
                     break

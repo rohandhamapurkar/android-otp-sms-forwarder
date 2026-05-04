@@ -71,6 +71,14 @@
             android:layout_height="wrap_content"
             android:hint="Message Prefix"
             android:inputType="text"
+            android:layout_marginBottom="8dp" />
+
+        <CheckBox
+            android:id="@+id/checkIncludeFilter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Include Matched Filter in message"
+            android:checked="true"
             android:layout_marginBottom="16dp" />
 
         <Button
