@@ -14,26 +14,25 @@ import com.google.gson.reflect.TypeToken
 
 class SmsReceiver : BroadcastReceiver() {
 
-    companion object {
-        // Pre-compile the regexes once to save CPU cycles on every message
-        private val OTP_6_PATTERN = Regex("""\b(\d{6})\b""")
-        private val OTP_4_PATTERN = Regex("""\b(\d{4})\b""")
-        private val gson = Gson()
-    }
-
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
 
         val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
         
         val sharedPrefs = context.getSharedPreferences("forwarder_prefs", Context.MODE_PRIVATE)
+        val masterEnabled = sharedPrefs.getBoolean("master_enabled", true)
+        if (!masterEnabled) return
+
         val forwardTo = sharedPrefs.getString("forward_to", "") ?: ""
         val prefixText = sharedPrefs.getString("prefix_text", "my lord here you go") ?: ""
         val includeFilter = sharedPrefs.getBoolean("include_filter", true)
         
         val filtersJson = sharedPrefs.getString("filter_texts_json", "[]")
-        val filtersArray: Array<String> = gson.fromJson(filtersJson, Array<String>::class.java)
-        val filters = filtersArray.toList()
+        val filters: List<String> = try {
+            Gson().fromJson(filtersJson, object : TypeToken<List<String>>() {}.type)
+        } catch (e: Exception) {
+            emptyList()
+        }
         
         if (forwardTo.isEmpty() || filters.isEmpty()) return
 
@@ -44,9 +43,7 @@ class SmsReceiver : BroadcastReceiver() {
             val matchedFilter = filters.find { body.contains(it, ignoreCase = true) }
             
             if (matchedFilter != null) {
-                // Check for 6-digit OTP first, then 4-digit OTP
-                val otp = OTP_6_PATTERN.find(body)?.groupValues?.get(1)
-                    ?: OTP_4_PATTERN.find(body)?.groupValues?.get(1)
+                val otp = OtpUtils.extractOtp(body, matchedFilter)
 
                 if (otp != null) {
                     val cleanPrefix = prefixText.trim().removeSuffix(":")
@@ -56,6 +53,8 @@ class SmsReceiver : BroadcastReceiver() {
                         "$cleanPrefix: $otp"
                     }
                     forwardSms(context, forwardTo, finalMessage)
+                    val sender = sms.displayOriginatingAddress ?: "Unknown"
+                    showNotification(context, sender, finalMessage)
                     // Found the OTP, no need to process remaining parts of this intent
                     break
                 }

@@ -29,6 +29,14 @@
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switchMaster"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/master_enable_disable"
+            android:checked="true"
+            android:layout_marginBottom="16dp" />
+
         <EditText
             android:id="@+id/editForwardTo"
             android:layout_width="match_parent"
@@ -77,7 +85,7 @@
             android:id="@+id/checkIncludeFilter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Include Matched Filter in message"
+            android:text="@string/include_matched_filter_in_message"
             android:checked="true"
             android:layout_marginBottom="16dp" />
 

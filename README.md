@@ -4,10 +4,12 @@ OTP Forwarder is an Android application designed to automatically detect and for
 
 ## 🚀 Features
 
-- **Automatic OTP Detection**: Uses regex to identify 4 and 6-digit codes in incoming SMS (prioritizing 6-digit matches).
+- **Master Toggle**: Quickly enable or disable all forwarding and filtering functionality from the main dashboard.
+- **Robust OTP Detection**: Uses regex to identify 4 and 6-digit codes. The logic is optimized to avoid "false positives" by ignoring numbers that are part of the filter keyword itself (e.g., a card ending in 4 digits).
 - **Keyword Filtering**: Only forwards messages containing specific keywords (e.g., "Bank", "Login", "Verification").
 - **Custom Forwarding**: Set a target phone number and an optional prefix.
 - **Contextual Info**: Toggle whether to include the matched filter name in the forwarded message (e.g., "Prefix (Bank Name): OTP").
+- **Visual Feedback**: Triggers a system notification whenever an OTP is successfully intercepted and forwarded.
 - **Permission Management**: Built-in UI to track and request necessary SMS and notification permissions.
 - **Persistent Configuration**: Settings are saved locally using `SharedPreferences`.
 
@@ -16,9 +18,10 @@ OTP Forwarder is an Android application designed to automatically detect and for
 - **Language**: Kotlin
 - **Min SDK**: 23 (Android 6.0)
 - **Target SDK**: 36 (Android 15)
+- **UI Framework**: Material 3 (MD3) for modern components and theming.
 - **Dependencies**:
   - `Gson`: For JSON serialization of filter lists.
-  - `Material Components`: For modern UI elements like Chips.
+  - `Material Components`: Using Material 3 for the `MaterialSwitch` and Chips.
   - `AndroidX Core & AppCompat`: For backward compatibility.
 
 ## 📦 Project Structure
@@ -27,13 +30,14 @@ OTP Forwarder is an Android application designed to automatically detect and for
 app/src/main/
 ├── java/com/example/otpforwarder/
 │   ├── MainActivity.kt    # Main UI and configuration management
-│   └── SmsReceiver.kt     # Background receiver for SMS processing
+│   ├── SmsReceiver.kt     # Background receiver for SMS processing
+│   └── OtpUtils.kt        # Centralized logic for OTP extraction
 ├── res/
 │   ├── layout/
 │   │   └── activity_main.xml # App dashboard layout
 │   └── values/
 │       ├── strings.xml     # App strings
-│       └── themes.xml      # App styling
+│       └── themes.xml      # Material 3 styling
 └── AndroidManifest.xml     # App metadata and permission declarations
 ```
 
@@ -48,7 +52,7 @@ app/src/main/
 3. **Build and Run**:
    - Deploy the app to your Android device.
 4. **Configuration**:
-   - Launch the app and grant the required SMS permissions.
+   - Launch the app and grant the required SMS and Notification permissions.
    - Enter the **Target Phone Number** where OTPs should be sent.
    - Add **Filter Keywords** (e.g., "HDFC", "Google", "Amazon"). The app will only process messages containing these words.
    - Customize the **Prefix Text** (optional).
@@ -66,8 +70,8 @@ To function correctly, the app requires the following permissions:
 
 ## 🧪 Testing
 
-The project includes unit tests for the OTP extraction logic:
-- `OtpExtractionTest.kt`: Verifies the regex pattern against various SMS formats.
+The project includes unit tests for the robust OTP extraction logic:
+- `OtpExtractionTest.kt`: Verifies the regex pattern and filter-exclusion logic against various SMS formats, ensuring 6-digit codes are prioritized and false positives are avoided.
 
 ## 📄 License
 

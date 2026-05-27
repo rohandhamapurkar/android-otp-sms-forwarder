@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">OTPForwarder</string>
+    <string name="master_enable_disable">Master Enable / Disable</string>
+    <string name="include_matched_filter_in_message">Include Matched Filter in message</string>
 </resources>

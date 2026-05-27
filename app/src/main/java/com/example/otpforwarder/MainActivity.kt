@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var editPrefixText: EditText
     private lateinit var editFilterText: EditText
     private lateinit var checkIncludeFilter: android.widget.CheckBox
+    private lateinit var switchMaster: com.google.android.material.materialswitch.MaterialSwitch
     private lateinit var btnAddFilter: Button
     private lateinit var chipGroupFilters: ChipGroup
     
@@ -48,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         editForwardTo = findViewById(R.id.editForwardTo)
         editPrefixText = findViewById(R.id.editPrefixText)
         checkIncludeFilter = findViewById(R.id.checkIncludeFilter)
+        switchMaster = findViewById(R.id.switchMaster)
         editFilterText = findViewById(R.id.editFilterText)
         btnAddFilter = findViewById(R.id.btnAddFilter)
         chipGroupFilters = findViewById(R.id.chipGroupFilters)
@@ -56,6 +58,7 @@ class MainActivity : AppCompatActivity() {
         editForwardTo.setText(sharedPrefs.getString("forward_to", ""))
         editPrefixText.setText(sharedPrefs.getString("prefix_text", "my lord here you go"))
         checkIncludeFilter.isChecked = sharedPrefs.getBoolean("include_filter", true)
+        switchMaster.isChecked = sharedPrefs.getBoolean("master_enabled", true)
         
         val savedFiltersJson = sharedPrefs.getString("filter_texts_json", "[]")
         val savedFiltersArray: Array<String> = gson.fromJson(savedFiltersJson, Array<String>::class.java)
@@ -76,12 +79,14 @@ class MainActivity : AppCompatActivity() {
             val forwardTo = editForwardTo.text.toString()
             val prefixText = editPrefixText.text.toString()
             val includeFilter = checkIncludeFilter.isChecked
+            val masterEnabled = switchMaster.isChecked
             val filtersJson = gson.toJson(filtersList)
             
             sharedPrefs.edit().apply {
                 putString("forward_to", forwardTo)
                 putString("prefix_text", prefixText)
                 putBoolean("include_filter", includeFilter)
+                putBoolean("master_enabled", masterEnabled)
                 putString("filter_texts_json", filtersJson)
                 apply()
             }
