@@ -9,8 +9,9 @@ import android.os.Build
 import android.provider.Telephony
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SmsReceiver : BroadcastReceiver() {
 
@@ -23,41 +24,37 @@ class SmsReceiver : BroadcastReceiver() {
         val masterEnabled = sharedPrefs.getBoolean("master_enabled", true)
         if (!masterEnabled) return
 
-        val forwardTo = sharedPrefs.getString("forward_to", "") ?: ""
-        val prefixText = sharedPrefs.getString("prefix_text", "my lord here you go") ?: ""
-        val includeFilter = sharedPrefs.getBoolean("include_filter", true)
-        
-        val filtersJson = sharedPrefs.getString("filter_texts_json", "[]")
-        val filters: List<String> = try {
-            Gson().fromJson(filtersJson, object : TypeToken<List<String>>() {}.type)
-        } catch (e: Exception) {
-            emptyList()
-        }
-        
-        if (forwardTo.isEmpty() || filters.isEmpty()) return
+        val goAsync = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val db = AppDatabase.getDatabase(context)
+                val activeConfigs = db.configDao().getActiveConfigs()
+                
+                if (activeConfigs.isEmpty()) return@launch
 
-        for (sms in messages) {
-            val body = sms.displayMessageBody ?: continue
-            
-            // Check if any of the filters match
-            val matchedFilter = filters.find { body.contains(it, ignoreCase = true) }
-            
-            if (matchedFilter != null) {
-                val otp = OtpUtils.extractOtp(body, matchedFilter)
-
-                if (otp != null) {
-                    val cleanPrefix = prefixText.trim().removeSuffix(":")
-                    val finalMessage = if (includeFilter) {
-                        "$cleanPrefix ($matchedFilter): $otp"
-                    } else {
-                        "$cleanPrefix: $otp"
-                    }
-                    forwardSms(context, forwardTo, finalMessage)
+                for (sms in messages) {
+                    val body = sms.displayMessageBody ?: continue
                     val sender = sms.displayOriginatingAddress ?: "Unknown"
-                    showNotification(context, sender, finalMessage)
-                    // Found the OTP, no need to process remaining parts of this intent
-                    break
+
+                    for (config in activeConfigs) {
+                        for (filter in config.filterKeywords) {
+                            if (body.contains(filter, ignoreCase = true)) {
+                                val otp = OtpUtils.extractOtp(body, filter)
+                                if (otp != null) {
+                                    val cleanPrefix = config.messagePrefix.trim().removeSuffix(":")
+                                    val finalMessage = "$cleanPrefix ($filter): $otp"
+                                    
+                                    forwardSms(context, config.forwardTo, finalMessage)
+                                    showNotification(context, sender, finalMessage)
+                                    // Match found for this config, move to next config
+                                    break 
+                                }
+                            }
+                        }
+                    }
                 }
+            } finally {
+                goAsync.finish()
             }
         }
     }
