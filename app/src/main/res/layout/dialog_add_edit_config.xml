@@ -20,13 +20,14 @@
             android:layout_marginBottom="16dp" />
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutForwardTo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Forward to Number"
+            android:hint="Forward to Number *"
             android:layout_marginBottom="12dp"
             app:counterEnabled="true"
             app:counterMaxLength="10"
-            app:helperText="Exactly 10 digits required"
+            app:helperText="Required. Exactly 10 digits"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -39,10 +40,12 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutPrefix"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Message Prefix"
+            android:hint="Message Prefix *"
             android:layout_marginBottom="12dp"
+            app:helperText="Required. Sent as \&quot;Prefix: 123456\&quot;"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -55,8 +58,16 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Filter Keywords"
+            android:text="Filter Keywords *"
             android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/textKeywordError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Required. Add at least one keyword"
+            android:textSize="12sp"
             android:layout_marginBottom="4dp" />
 
         <LinearLayout

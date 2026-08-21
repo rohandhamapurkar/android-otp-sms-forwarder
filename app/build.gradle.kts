@@ -42,6 +42,11 @@ android {
     }
 }
 
+// Exported schemas are the reference point for writing Room migrations; keep them in git.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx.v1120)
     implementation(libs.androidx.activity.ktx)

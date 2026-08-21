@@ -15,11 +15,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.textfield.TextInputLayout
 
 class MainActivity : AppCompatActivity() {
 
@@ -104,41 +107,84 @@ class MainActivity : AppCompatActivity() {
         val btnAddKeyword = dialogView.findViewById<Button>(R.id.btnAddKeyword)
         val chipGroupKeywords = dialogView.findViewById<ChipGroup>(R.id.chipGroupKeywords)
         val dialogTitle = dialogView.findViewById<TextView>(R.id.dialogTitle)
+        val layoutForwardTo = dialogView.findViewById<TextInputLayout>(R.id.layoutForwardTo)
+        val layoutPrefix = dialogView.findViewById<TextInputLayout>(R.id.layoutPrefix)
+        val textKeywordError = dialogView.findViewById<TextView>(R.id.textKeywordError)
+
+        val hintColor = MaterialColors.getColor(
+            textKeywordError, com.google.android.material.R.attr.colorOnSurfaceVariant
+        )
+        val errorColor = MaterialColors.getColor(
+            textKeywordError, com.google.android.material.R.attr.colorError
+        )
+        textKeywordError.setTextColor(hintColor)
 
         val keywords = mutableListOf<String>()
+
+        fun refreshKeywordHint(showAsError: Boolean = false) {
+            textKeywordError.text = if (keywords.isEmpty()) {
+                "Required. Add at least one keyword"
+            } else {
+                "${keywords.size} keyword(s) added"
+            }
+            textKeywordError.setTextColor(
+                if (showAsError && keywords.isEmpty()) errorColor else hintColor
+            )
+        }
 
         if (config != null) {
             dialogTitle.text = "Edit Configuration"
             editForwardTo.setText(config.forwardTo)
             editPrefix.setText(config.messagePrefix)
             keywords.addAll(config.filterKeywords)
-            keywords.forEach { addKeywordChip(it, chipGroupKeywords, keywords) }
+            // Iterate a copy: the chip close listener mutates `keywords`.
+            keywords.toList().forEach {
+                addKeywordChip(it, chipGroupKeywords, keywords) { refreshKeywordHint() }
+            }
         }
+        refreshKeywordHint()
+
+        // Clear a field's error as soon as the user starts correcting it.
+        editForwardTo.doOnTextChanged { _, _, _, _ -> layoutForwardTo.error = null }
+        editPrefix.doOnTextChanged { _, _, _, _ -> layoutPrefix.error = null }
 
         btnAddKeyword.setOnClickListener {
             val text = editFilterKeyword.text.toString().trim()
-            if (text.isNotEmpty() && !keywords.contains(text)) {
-                keywords.add(text)
-                addKeywordChip(text, chipGroupKeywords, keywords)
-                editFilterKeyword.text.clear()
+            when {
+                text.isEmpty() ->
+                    Toast.makeText(this, "Enter a keyword first", Toast.LENGTH_SHORT).show()
+
+                keywords.any { it.equals(text, ignoreCase = true) } ->
+                    Toast.makeText(this, "\"$text\" is already added", Toast.LENGTH_SHORT).show()
+
+                else -> {
+                    keywords.add(text)
+                    addKeywordChip(text, chipGroupKeywords, keywords) { refreshKeywordHint() }
+                    editFilterKeyword.text.clear()
+                    refreshKeywordHint()
+                }
             }
         }
 
-        AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
-            .setPositiveButton("Save") { _, _ ->
+            .setPositiveButton("Save", null)
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        // Wiring the click listener after show() keeps the dialog open when validation fails,
+        // instead of dismissing and discarding everything the user typed.
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val forwardTo = editForwardTo.text.toString().trim()
                 val prefix = editPrefix.text.toString().trim()
-                
-                if (forwardTo.length != 10) {
-                    Toast.makeText(this, "Forward number must be exactly 10 digits", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-                
-                if (keywords.isEmpty()) {
-                    Toast.makeText(this, "At least one filter required", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
+
+                val result = ConfigValidator.validate(forwardTo, prefix, keywords)
+                layoutForwardTo.error = result.forwardToError
+                layoutPrefix.error = result.prefixError
+                refreshKeywordHint(showAsError = true)
+
+                if (!result.isValid) return@setOnClickListener
 
                 val newConfig = if (config == null) {
                     ForwardConfig(forwardTo = forwardTo, filterKeywords = keywords, messagePrefix = prefix)
@@ -147,18 +193,25 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (config == null) viewModel.insert(newConfig) else viewModel.update(newConfig)
+                dialog.dismiss()
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+        }
+        dialog.show()
     }
 
-    private fun addKeywordChip(keyword: String, chipGroup: ChipGroup, keywords: MutableList<String>) {
+    private fun addKeywordChip(
+        keyword: String,
+        chipGroup: ChipGroup,
+        keywords: MutableList<String>,
+        onChanged: () -> Unit
+    ) {
         val chip = Chip(this)
         chip.text = keyword
         chip.isCloseIconVisible = true
         chip.setOnCloseIconClickListener {
             chipGroup.removeView(chip)
             keywords.remove(keyword)
+            onChanged()
         }
         chipGroup.addView(chip)
     }
