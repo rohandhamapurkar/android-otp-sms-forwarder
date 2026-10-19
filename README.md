@@ -27,6 +27,14 @@ The permissive number fallback is retained for compatibility: a matching message
 
 The master toggle is stored in SharedPreferences; forwarding rules are stored in Room. Older preference-based rules are imported before their old preference values are removed. Incomplete legacy configurations are retained.
 
+### Keeping rules across updates and reinstalls
+
+Updates signed with the same key preserve rules and settings. On supported Android 10+ uninstall screens, choose **Keep app data** to retain configuration for a later reinstall with the same signer. Availability depends on the device and installer.
+
+Android backup and device transfer are enabled for the rules database (including its journal files) and forwarding preferences only. A reinstall can restore that configuration when Android has a completed backup and restore is enabled for the account/device. Backups run on Android's schedule; this is not an immediate or guaranteed backup. No SMS bodies or OTP history are stored by the app or included in its backup allowlist. Permissions may need to be granted again after reinstall.
+
+If you delete app data and Android has no usable backup, the rules cannot be recovered. The first upgrade from the temporary signing keys used by v1.0.0/v1.1.0 still requires a fresh installation.
+
 Sending uses the device's default SMS subscription. Configure a default SMS SIM on dual-SIM devices. Send-result callbacks report modem/network failures through notifications when notification permission is available. A successful send result does not confirm delivery to the recipient. Debug builds display queued message contents; release builds only display failures.
 
 ## Build and test
