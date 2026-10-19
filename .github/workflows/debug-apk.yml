@@ -48,8 +48,28 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
+      - name: Restore persistent debug signing key
+        env:
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$DEBUG_KEYSTORE_BASE64" ]]; then
+            echo 'Missing DEBUG_KEYSTORE_BASE64 secret. Refusing to generate a different signing key.' >&2
+            exit 1
+          fi
+          umask 077
+          mkdir -p .signing
+          printf '%s' "$DEBUG_KEYSTORE_BASE64" | base64 --decode > .signing/debug.keystore
+          keytool -list -keystore .signing/debug.keystore -storepass android -alias androiddebugkey > /dev/null
+
       - name: Test and build debug APK
-        run: ./gradlew :app:testDebugUnitTest :app:assembleDebug --stacktrace
+        run: |
+          set -euo pipefail
+          version_args=()
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            version_args+=("-PreleaseVersion=$GITHUB_REF_NAME")
+          fi
+          ./gradlew :app:testDebugUnitTest :app:assembleDebug --stacktrace "${version_args[@]}"
 
       - name: Collect APK and checksum
         id: collect
@@ -69,7 +89,7 @@ jobs:
           set -euo pipefail
           build_tools=$(find "$ANDROID_SDK_ROOT/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
           apk="artifacts/otpforwarder-debug-${{ steps.collect.outputs.sha }}.apk"
-          "$build_tools/apksigner" verify "$apk"
+          "$build_tools/apksigner" verify --print-certs "$apk" > artifacts/signing-info.txt
           "$build_tools/aapt2" dump badging "$apk" > artifacts/apk-info.txt
           {
             echo '### OTP Forwarder debug APK'
@@ -83,6 +103,11 @@ jobs:
             echo 'SHA-256:'
             echo '```text'
             cat artifacts/SHA256SUMS.txt
+            echo '```'
+            echo
+            echo 'Signing certificate:'
+            echo '```text'
+            cat artifacts/signing-info.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -108,3 +133,7 @@ jobs:
             gh release create "$RELEASE_TAG" artifacts/*.apk artifacts/SHA256SUMS.txt \
               --verify-tag --title "$RELEASE_TAG" --generate-notes
           fi
+
+      - name: Remove restored signing key
+        if: always()
+        run: rm -f .signing/debug.keystore

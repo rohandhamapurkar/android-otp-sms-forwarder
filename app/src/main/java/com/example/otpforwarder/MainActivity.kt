@@ -45,6 +45,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        findViewById<TextView>(R.id.textAppVersion).text =
+            getString(R.string.app_version, BuildConfig.VERSION_NAME)
+
         statusReceiveSms = findViewById(R.id.statusReceiveSms)
         statusReadSms = findViewById(R.id.statusReadSms)
         statusSendSms = findViewById(R.id.statusSendSms)

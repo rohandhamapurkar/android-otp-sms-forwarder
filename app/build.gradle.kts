@@ -11,6 +11,20 @@ android {
         applicationId = "com.example.otpforwarder"
         minSdk = 23
         targetSdk = 36
+        versionCode = 2
+        versionName = providers.gradleProperty("releaseVersion").orElse("1.1.1").get()
+    }
+
+    signingConfigs {
+        getByName("debug") {
+            val sharedDebugKey = rootProject.file(".signing/debug.keystore")
+            if (sharedDebugKey.exists()) {
+                storeFile = sharedDebugKey
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
     }
 
     buildTypes {

@@ -1,4 +1,5 @@
 <resources>
+    <string name="app_version">Version %1$s</string>
     <string name="otp_length">OTP length</string>
     <string name="otp_length_auto">Auto (current matching)</string>
     <string name="otp_length_four">4 digits</string>

@@ -2,6 +2,8 @@
 
 Android app that forwards extracted SMS codes using locally configured keyword rules.
 
+The main screen shows the installed version below the app title. Tagged GitHub builds use the exact release tag (for example, `Version v1.1.1`); local and manual branch builds use the version configured in Gradle.
+
 ## Setup
 
 1. Install the debug APK from a tagged [GitHub release](https://github.com/rohandhamapurkar/android-otp-sms-forwarder/releases), or download the artifact from a completed [Actions run](https://github.com/rohandhamapurkar/android-otp-sms-forwarder/actions/workflows/debug-apk.yml).
@@ -41,13 +43,21 @@ Minimum supported Android API: 23. Target API: 36. The app uses Kotlin, Material
 
 ## GitHub debug APK builds
 
-Push any Git tag to run `.github/workflows/debug-apk.yml`. The workflow runs unit tests, builds and verifies the debug APK, uploads it as a workflow artifact for 30 days, and attaches the APK and SHA-256 checksum to a GitHub release for that tag. No signing secrets are required.
+Push any Git tag to run `.github/workflows/debug-apk.yml`. The workflow runs unit tests, builds and verifies the debug APK, uploads it as a workflow artifact for 30 days, and attaches the APK and SHA-256 checksum to a GitHub release for that tag.
 
 Pushing to `main` alone does not trigger an APK build. Push a new tag pointing to the desired commit, or use the manual Actions run.
 
 You can also run **Release Debug APK** from the Actions tab. Manual runs on a branch upload artifacts without creating a release. The APK supports Android API 23 and later, including API 36 devices.
 
-Each fresh runner generates its own debug signing key. Installing over a build signed with a different key requires uninstalling the old app first, which clears its settings. Debug builds also show queued OTP contents in notifications.
+### Signing and updates
+
+CI uses a persistent private debug keystore from the repository's `DEBUG_KEYSTORE_BASE64` Actions secret. It restores the key to `.signing/debug.keystore` before building and removes it afterward. Missing signing credentials fail the build instead of silently generating a new key. The keystore is excluded from Git; keep a secure backup and reuse it for all future builds.
+
+For local builds that must update CI-installed APKs, use that same keystore at `.signing/debug.keystore`. Other local checkouts fall back to their usual Android debug key and cannot update a CI build signed with a different key. The shared debug keystore uses alias `androiddebugkey` and the conventional debug password `android`; its private key must remain private.
+
+The first build with persistent signing requires one final uninstall of v1.0.0 or v1.1.0, which used temporary CI keys. This clears settings. Subsequent builds with the persistent key and the same application ID can update the installed app while retaining settings. Increase `versionCode` and update `versionName` in `app/build.gradle.kts` for each new release; Android rejects version downgrades.
+
+Debug builds show queued OTP contents in notifications. APK signing certificate details are included in the workflow summary and artifacts.
 
 Tests cover extraction, rule matching and formatting, validation, JSON conversion, and multipart assembly. Real SMS send callbacks and configuration migration should also be checked on a device before release.
 
