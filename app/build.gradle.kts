@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.otpforwarder"
         minSdk = 23
         targetSdk = 36
-        versionCode = 2
-        versionName = providers.gradleProperty("releaseVersion").orElse("1.1.1").get()
+        versionCode = 3
+        versionName = providers.gradleProperty("releaseVersion").orElse("1.2.0").get()
     }
 
     signingConfigs {
