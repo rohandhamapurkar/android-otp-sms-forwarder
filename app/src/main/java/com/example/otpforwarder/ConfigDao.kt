@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ConfigDao {
     @Query("SELECT * FROM forward_configs")
+    suspend fun getConfigSnapshot(): List<ForwardConfig>
+
+    @Query("SELECT * FROM forward_configs")
     fun getAllConfigs(): Flow<List<ForwardConfig>>
 
     @Query("SELECT * FROM forward_configs WHERE isEnabled = 1")

@@ -1,78 +1,55 @@
 # OTP Forwarder
 
-OTP Forwarder is an Android application designed to automatically detect and forward 4 or 6-digit One-Time Passwords (OTPs) from incoming SMS messages to a pre-configured phone number. It allows users to set up specific filters to ensure only relevant messages are forwarded.
+Android app that forwards extracted SMS codes using locally configured keyword rules.
 
-## 🚀 Features
+## Setup
 
-- **Master Toggle**: Quickly enable or disable all forwarding and filtering functionality from the main dashboard.
-- **Robust OTP Detection**: Uses regex to identify 4 and 6-digit codes. The logic is optimized to avoid "false positives" by ignoring numbers that are part of the filter keyword itself (e.g., a card ending in 4 digits).
-- **Keyword Filtering**: Only forwards messages containing specific keywords (e.g., "Bank", "Login", "Verification").
-- **Custom Forwarding**: Set a target phone number and an optional prefix.
-- **Contextual Info**: Toggle whether to include the matched filter name in the forwarded message (e.g., "Prefix (Bank Name): OTP").
-- **Visual Feedback**: Triggers a system notification whenever an OTP is successfully intercepted and forwarded.
-- **Permission Management**: Built-in UI to track and request necessary SMS and notification permissions.
-- **Persistent Configuration**: Settings are saved locally using `SharedPreferences`.
+1. Install the debug APK from a tagged [GitHub release](https://github.com/rohandhamapurkar/OTPForwarder/releases), or download the artifact from a completed [Actions run](https://github.com/rohandhamapurkar/OTPForwarder/actions/workflows/debug-apk.yml).
+2. Open the app and grant SMS permissions. Allow notifications to see forwarding failures.
+3. Add a rule with a ten-digit destination, message prefix, and one or more keywords. Tap **Add** for each keyword, then **Save**.
+4. Enable the rule and the master toggle. On dual-SIM devices, select a default SMS SIM in Android settings.
 
-## 🛠 Tech Stack
+## Matching behavior
 
-- **Language**: Kotlin
-- **Min SDK**: 23 (Android 6.0)
-- **Target SDK**: 36 (Android 15)
-- **UI Framework**: Material 3 (MD3) for modern components and theming.
-- **Dependencies**:
-  - `Gson`: For JSON serialization of filter lists.
-  - `Material Components`: Using Material 3 for the `MaterialSwitch` and Chips.
-  - `AndroidX Core & AppCompat`: For backward compatibility.
+- Keywords match the incoming message body as case-insensitive substrings.
+- The matched keyword is removed before extraction, preventing numbers inside that keyword from being used as the code.
+- Codes of 4–8 digits near OTP/code/PIN/password words take priority. Otherwise the first standalone six-digit number, then four-digit number, is used.
+- Each enabled rule produces at most one outgoing message. Multiple matching rules can forward to multiple destinations.
+- Outgoing text is `Prefix: code`. New rules require a prefix, at least one keyword, and a ten-digit destination number.
+- Multipart incoming SMS segments are assembled before matching. Long outgoing messages are split using the device's SMS encoding rules.
 
-## 📦 Project Structure
+The permissive number fallback is retained for compatibility: a matching message without an actual OTP can still yield another four- or six-digit number. Filters match body text rather than authenticate the sender.
 
-```text
-app/src/main/
-├── java/com/example/otpforwarder/
-│   ├── MainActivity.kt    # Main UI and configuration management
-│   ├── SmsReceiver.kt     # Background receiver for SMS processing
-│   └── OtpUtils.kt        # Centralized logic for OTP extraction
-├── res/
-│   ├── layout/
-│   │   └── activity_main.xml # App dashboard layout
-│   └── values/
-│       ├── strings.xml     # App strings
-│       └── themes.xml      # Material 3 styling
-└── AndroidManifest.xml     # App metadata and permission declarations
+## Configuration and status
+
+The master toggle is stored in SharedPreferences; forwarding rules are stored in Room. Older preference-based rules are imported before their old preference values are removed. Incomplete legacy configurations are retained.
+
+Sending uses the device's default SMS subscription. Configure a default SMS SIM on dual-SIM devices. Send-result callbacks report modem/network failures through notifications when notification permission is available. A successful send result does not confirm delivery to the recipient. Debug builds display queued message contents; release builds only display failures.
+
+## Build and test
+
+Open in Android Studio with Android SDK 36 and Java 21 available to Gradle.
+
+```powershell
+.\gradlew.bat testDebugUnitTest assembleDebug
 ```
 
-## ⚙️ Setup & Usage
+On Linux or macOS, run `./gradlew testDebugUnitTest assembleDebug`. The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/yourusername/otpforwarder.git
-   ```
-2. **Open in Android Studio**:
-   - Open the project and wait for Gradle sync to complete.
-3. **Build and Run**:
-   - Deploy the app to your Android device.
-4. **Configuration**:
-   - Launch the app and grant the required SMS and Notification permissions.
-   - Enter the **Target Phone Number** where OTPs should be sent.
-   - Add **Filter Keywords** (e.g., "HDFC", "Google", "Amazon"). The app will only process messages containing these words.
-   - Customize the **Prefix Text** (optional).
-   - Click **Save Configuration**.
+Minimum supported Android API: 23. Target API: 36. The app uses Kotlin, Material Components, Room, coroutines, and Gson.
 
-## 🛡 Permissions
+## GitHub debug APK builds
 
-To function correctly, the app requires the following permissions:
-- `RECEIVE_SMS`: To detect incoming messages.
-- `READ_SMS`: To process message content.
-- `SEND_SMS`: To forward the extracted OTP to the target number.
-- `POST_NOTIFICATIONS`: To provide status updates (Android 13+).
+Push any Git tag to run `.github/workflows/debug-apk.yml`. The workflow runs unit tests, builds and verifies the debug APK, uploads it as a workflow artifact for 30 days, and attaches the APK and SHA-256 checksum to a GitHub release for that tag. No signing secrets are required.
 
-> **Note**: Due to Android's "SmsAndCallLogPolicy", manual configuration or specific play store exceptions might be required for production distribution.
+Pushing to `main` alone does not trigger an APK build. Push a new tag pointing to the desired commit, or use the manual Actions run.
 
-## 🧪 Testing
+You can also run **Release Debug APK** from the Actions tab. Manual runs on a branch upload artifacts without creating a release. The APK supports Android API 23 and later, including API 36 devices.
 
-The project includes unit tests for the robust OTP extraction logic:
-- `OtpExtractionTest.kt`: Verifies the regex pattern and filter-exclusion logic against various SMS formats, ensuring 6-digit codes are prioritized and false positives are avoided.
+Each fresh runner generates its own debug signing key. Installing over a build signed with a different key requires uninstalling the old app first, which clears its settings. Debug builds also show queued OTP contents in notifications.
 
-## 📄 License
+Tests cover extraction, rule matching and formatting, validation, JSON conversion, and multipart assembly. Real SMS send callbacks and configuration migration should also be checked on a device before release.
 
-This project is for educational purposes. Please ensure compliance with local privacy laws and telecommunication regulations before use.
+## Permissions
+
+The app currently requests RECEIVE_SMS, READ_SMS, SEND_SMS, and POST_NOTIFICATIONS (Android 13+). Forwarding requires SMS receive/send access. Notifications provide failure visibility but are not required for matching. SMS charges may apply.

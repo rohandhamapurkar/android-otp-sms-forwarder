@@ -60,18 +60,6 @@ class MainActivity : AppCompatActivity() {
             sharedPrefs.edit().putBoolean("master_enabled", isChecked).apply()
         }
 
-        // Migration/Cleanup of old data
-        if (sharedPrefs.contains("forward_to")) {
-            sharedPrefs.edit().apply {
-                remove("forward_to")
-                remove("prefix_text")
-                remove("include_filter")
-                remove("filter_texts_json")
-                apply()
-            }
-            Toast.makeText(this, "Old configuration cleared.", Toast.LENGTH_SHORT).show()
-        }
-
         adapter = ConfigAdapter(
             onEdit = { config -> showAddEditDialog(config) },
             onDelete = { config -> showDeleteConfirmation(config) },
@@ -187,9 +175,9 @@ class MainActivity : AppCompatActivity() {
                 if (!result.isValid) return@setOnClickListener
 
                 val newConfig = if (config == null) {
-                    ForwardConfig(forwardTo = forwardTo, filterKeywords = keywords, messagePrefix = prefix)
+                    ForwardConfig(forwardTo = forwardTo, filterKeywords = keywords.toList(), messagePrefix = prefix)
                 } else {
-                    config.copy(forwardTo = forwardTo, filterKeywords = keywords, messagePrefix = prefix)
+                    config.copy(forwardTo = forwardTo, filterKeywords = keywords.toList(), messagePrefix = prefix)
                 }
 
                 if (config == null) viewModel.insert(newConfig) else viewModel.update(newConfig)
@@ -237,6 +225,11 @@ class MainActivity : AppCompatActivity() {
         } else {
             statusNotifications.text = "NOTIFICATIONS: Not required (< API 33)"
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updatePermissionStatus()
     }
 
     private fun getPermissionStatus(permission: String): String {

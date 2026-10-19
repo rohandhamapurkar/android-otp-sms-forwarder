@@ -30,7 +30,8 @@
             </intent-filter>
         </activity>
 
-        <!-- 🔥 THIS IS THE IMPORTANT PART -->
+        <receiver android:name=".SmsSentReceiver" android:exported="false" />
+
         <receiver
             android:name=".SmsReceiver"
             android:exported="true"

@@ -8,6 +8,25 @@ import org.junit.Test
 class OtpExtractionTest {
 
     @Test
+    fun existingPermissiveFallbackRemainsSupported() {
+        assertEquals("0366", OtpUtils.extractOtp("HDFC Bank account ending 0366 credited", "HDFC Bank"))
+        assertEquals("778899", OtpUtils.extractOtp("778899 - use this at Amazon to continue", "Amazon"))
+    }
+
+    @Test
+    fun existingFilterRemovalAndNumberPriorityRemainUnchanged() {
+        // Compatibility snapshots: changing these requires a deliberate matching-policy change.
+        assertEquals("987654", OtpUtils.extractOtp("Ref 987654. OTP is 123456", "OTP"))
+        assertEquals("123456", OtpUtils.extractOtp("Amazon 4321 ref 123456", "Amazon"))
+    }
+
+    @Test
+    fun keywordAnchoringStillAcceptsFiveAndEightDigitCodes() {
+        assertEquals("12345", OtpUtils.extractOtp("Amazon OTP is 12345", "Amazon"))
+        assertEquals("12345678", OtpUtils.extractOtp("Amazon OTP is 12345678", "Amazon"))
+    }
+
+    @Test
     fun testOtpExtractionWithMatchingFilter() {
         val message = "OTP is 693547 for txn of INR 2.00 at Swiggy Limi on HDFC Bank card ending 0366. Valid till 01:54."
         val filter = "HDFC Bank"

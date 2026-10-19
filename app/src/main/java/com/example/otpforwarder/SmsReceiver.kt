@@ -1,18 +1,25 @@
 package com.example.otpforwarder
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.net.Uri
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Telephony
 import android.telephony.SmsManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import java.util.UUID
 
 class SmsReceiver : BroadcastReceiver() {
 
@@ -35,26 +42,43 @@ class SmsReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val db = AppDatabase.getDatabase(context)
+                try {
+                    LegacyConfigMigration.migrate(context, db)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "Legacy configuration retained after migration failure", e)
+                }
                 val activeConfigs = db.configDao().getActiveConfigs()
 
                 if (activeConfigs.isEmpty()) return@launch
 
-                for (sms in messages) {
-                    val body = sms.displayMessageBody ?: continue
-                    val sender = sms.displayOriginatingAddress ?: "Unknown"
+                val assembled = SmsAssembly.assemble(messages.mapNotNull { sms ->
+                    sms.displayMessageBody?.let { IncomingSms(sms.displayOriginatingAddress, it) }
+                })
+                for (sms in assembled) {
+                    val body = sms.body
+                    val sender = sms.sender ?: "Unknown"
 
                     for (outcome in ForwardingEngine.resolve(body, activeConfigs)) {
-                        forwardSms(context, outcome.forwardTo, outcome.message)
-                        showDebugNotification(context, sender, outcome.message)
+                        if (forwardSms(context, outcome.forwardTo, outcome.message)) {
+                            showDebugNotification(context, sender, outcome.message)
+                        }
                     }
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to process incoming SMS", e)
+                showFailureNotification(context, "configured destinations", e)
             } finally {
                 goAsync.finish()
             }
         }
     }
 
-    private fun forwardSms(context: Context, phoneNumber: String, message: String) {
+    private fun forwardSms(context: Context, phoneNumber: String, message: String): Boolean {
+        val callbacks = arrayListOf<PendingIntent>()
         try {
             // getSystemService(SmsManager::class.java) only exists on API 31+; on older
             // devices it returns null and forwarding would silently do nothing.
@@ -65,11 +89,27 @@ class SmsReceiver : BroadcastReceiver() {
                 SmsManager.getDefault()
             } ?: throw IllegalStateException("SmsManager unavailable on this device")
 
-            smsManager.sendTextMessage(phoneNumber, null, message, null, null)
-            Log.d(TAG, "Forwarded SMS to $phoneNumber")
+            val parts = smsManager.divideMessage(message)
+            for (index in parts.indices) {
+                val sent = Intent(context, SmsSentReceiver::class.java)
+                    .setAction(SmsSentReceiver.ACTION_SENT)
+                    .setData(Uri.parse("otpforwarder://sent/${UUID.randomUUID()}/$index"))
+                    .putExtra("destination", phoneNumber)
+                callbacks += PendingIntent.getBroadcast(context, 0, sent,
+                    PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
+            }
+            if (parts.size == 1) {
+                smsManager.sendTextMessage(phoneNumber, null, parts[0], callbacks[0], null)
+            } else {
+                smsManager.sendMultipartTextMessage(phoneNumber, null, parts, callbacks, null)
+            }
+            Log.d(TAG, "SMS submitted for sending")
+            return true
         } catch (e: Exception) {
+            callbacks.forEach { it.cancel() }
             Log.e(TAG, "Failed to forward SMS", e)
             showFailureNotification(context, phoneNumber, e)
+            return false
         }
     }
 
@@ -91,6 +131,7 @@ class SmsReceiver : BroadcastReceiver() {
     /** Mirrors every forwarded message on-device. Debug builds only — it echoes OTP contents. */
     private fun showDebugNotification(context: Context, sender: String, message: String) {
         if (!BuildConfig.DEBUG) return
+        if (!canNotify(context)) return
 
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -98,17 +139,25 @@ class SmsReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, DEBUG_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("SMS from $sender")
+            .setContentTitle("Forwarding queued: $sender")
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .build()
 
-        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+        try {
+            notificationManager.notify(UUID.randomUUID().hashCode(), notification)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Debug notification permission denied", e)
+        }
     }
 
     /** Shown in every build: a silent forwarding failure is otherwise invisible to the user. */
-    private fun showFailureNotification(context: Context, phoneNumber: String, error: Exception) {
+    internal fun showFailureNotification(context: Context, phoneNumber: String, error: Exception) {
+        if (!canNotify(context)) {
+            Log.w(TAG, "Cannot show forwarding failure: notification permission denied", error)
+            return
+        }
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         ensureChannel(notificationManager, FAILURE_CHANNEL_ID, "Forwarding Failures")
@@ -127,6 +176,15 @@ class SmsReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .build()
 
-        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+        try {
+            notificationManager.notify(UUID.randomUUID().hashCode(), notification)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Failure notification permission denied", e)
+        }
     }
+
+    private fun canNotify(context: Context): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
 }
