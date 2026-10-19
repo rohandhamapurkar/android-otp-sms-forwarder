@@ -5,7 +5,8 @@ data class ForwardOutcome(
     val configId: Int,
     val forwardTo: String,
     val message: String,
-    val matchedFilter: String
+    val matchedFilter: String,
+    val otp: String
 )
 
 /**
@@ -46,7 +47,8 @@ object ForwardingEngine {
                     configId = config.id,
                     forwardTo = config.forwardTo,
                     message = buildMessage(config.messagePrefix, otp),
-                    matchedFilter = filter
+                    matchedFilter = filter,
+                    otp = otp
                 )
                 // This config has produced its message; remaining filters are redundant.
                 break

@@ -1,4 +1,18 @@
 <resources>
+    <string name="test_rule">Test</string>
+    <string name="test_rule_title">Test forwarding rule</string>
+    <string name="test_rule_help">Paste a sample SMS to preview this saved rule. No SMS will be sent. The sample and result are not saved. Preview ignores the rule and master switches.</string>
+    <string name="sample_sms">Sample SMS</string>
+    <string name="preview_rule">Preview</string>
+    <string name="close_preview">Close</string>
+    <string name="test_rule_ready">Rule and master switches are enabled.</string>
+    <string name="test_rule_disabled">This rule is disabled. Preview shows how it would match if enabled.</string>
+    <string name="test_master_disabled">Master forwarding is off. Preview still works.</string>
+    <string name="test_empty_message">Enter a sample SMS first.</string>
+    <string name="test_no_keyword">No match: none of this rule’s keywords occur in the sample SMS.</string>
+    <string name="test_no_otp_auto">A keyword matched, but no code was extracted using Auto matching.</string>
+    <string name="test_no_otp_length">A keyword matched, but no %1$d-digit code was extracted.</string>
+    <string name="test_match_result">Matched keyword: %1$s\nExtracted OTP: %2$s\nDestination: %3$s\n\nOutgoing message:\n%4$s\n\nPreview only — no SMS sent.</string>
     <string name="app_version">Version %1$s</string>
     <string name="otp_length">OTP length</string>
     <string name="otp_length_auto">Auto (current matching)</string>

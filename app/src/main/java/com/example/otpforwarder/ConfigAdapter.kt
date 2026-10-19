@@ -13,6 +13,7 @@ import com.google.android.material.materialswitch.MaterialSwitch
 class ConfigAdapter(
     private val onEdit: (ForwardConfig) -> Unit,
     private val onDelete: (ForwardConfig) -> Unit,
+    private val onTest: (ForwardConfig) -> Unit,
     private val onToggle: (ForwardConfig, Boolean) -> Unit
 ) : ListAdapter<ForwardConfig, ConfigAdapter.ConfigViewHolder>(ConfigDiffCallback()) {
 
@@ -32,6 +33,7 @@ class ConfigAdapter(
         private val textPrefix: TextView = itemView.findViewById(R.id.textPrefix)
         private val switchEnabled: MaterialSwitch = itemView.findViewById(R.id.switchEnabled)
         private val btnEdit: Button = itemView.findViewById(R.id.btnEdit)
+        private val btnTest: Button = itemView.findViewById(R.id.btnTest)
         private val btnDelete: Button = itemView.findViewById(R.id.btnDelete)
 
         fun bind(config: ForwardConfig) {
@@ -52,6 +54,7 @@ class ConfigAdapter(
             }
 
             btnEdit.setOnClickListener { onEdit(config) }
+            btnTest.setOnClickListener { onTest(config) }
             btnDelete.setOnClickListener { onDelete(config) }
         }
     }

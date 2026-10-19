@@ -23,6 +23,12 @@ The main screen shows the installed version below the app title. Tagged GitHub b
 
 The permissive number fallback is retained for compatibility: a matching message without an actual OTP can still yield another four- or six-digit number. Filters match body text rather than authenticate the sender.
 
+## Test a rule without sending SMS
+
+Tap **Test** on a saved rule, paste a sample SMS, and tap **Preview**. The result shows the first matched keyword that yields a code, extracted OTP, destination, and exact outgoing message. It distinguishes an empty sample, no keyword match, and a keyword match without a code of the selected length. Editing the sample clears the previous result.
+
+Preview uses the same matching and formatting engine as live forwarding and ignores enable switches so you can test disabled rules. The dialog shows when the rule or master switch is off. It never sends an SMS, changes a saved rule, or saves the sample/result. Close the dialog to discard the preview.
+
 ## Configuration and status
 
 The master toggle is stored in SharedPreferences; forwarding rules are stored in Room. Older preference-based rules are imported before their old preference values are removed. Incomplete legacy configurations are retained.

@@ -67,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         adapter = ConfigAdapter(
             onEdit = { config -> showAddEditDialog(config) },
             onDelete = { config -> showDeleteConfirmation(config) },
+            onTest = { config -> showTestRuleDialog(config) },
             onToggle = { config, isEnabled -> 
                 viewModel.update(config.copy(isEnabled = isEnabled))
             }
@@ -89,6 +90,51 @@ class MainActivity : AppCompatActivity() {
 
         updatePermissionStatus()
         requestSmsPermissions()
+    }
+
+    private fun showTestRuleDialog(config: ForwardConfig) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_test_rule, null)
+        val sample = dialogView.findViewById<EditText>(R.id.editSampleSms)
+        val sampleLayout = dialogView.findViewById<TextInputLayout>(R.id.layoutSampleSms)
+        val resultText = dialogView.findViewById<TextView>(R.id.textTestRuleResult)
+        val statusText = dialogView.findViewById<TextView>(R.id.textTestRuleStatus)
+        val status = buildList {
+            if (!config.isEnabled) add(getString(R.string.test_rule_disabled))
+            if (!switchMaster.isChecked) add(getString(R.string.test_master_disabled))
+        }
+        statusText.text = if (status.isEmpty()) getString(R.string.test_rule_ready) else status.joinToString("\n")
+
+        sample.doOnTextChanged { _, _, _, _ ->
+            sampleLayout.error = null
+            resultText.text = ""
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.test_rule_title)
+            .setView(dialogView)
+            .setPositiveButton(R.string.preview_rule, null)
+            .setNegativeButton(R.string.close_preview, null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                when (val result = RuleTester.preview(sample.text.toString(), config)) {
+                    RuleTester.Result.EmptyMessage -> sampleLayout.error = getString(R.string.test_empty_message)
+                    RuleTester.Result.NoKeywordMatch -> resultText.setText(R.string.test_no_keyword)
+                    RuleTester.Result.NoOtp -> resultText.text = if (config.otpLength == null) {
+                        getString(R.string.test_no_otp_auto)
+                    } else {
+                        getString(R.string.test_no_otp_length, config.otpLength)
+                    }
+                    is RuleTester.Result.Match -> resultText.text = getString(
+                        R.string.test_match_result,
+                        result.outcome.matchedFilter,
+                        result.outcome.otp,
+                        result.outcome.forwardTo,
+                        result.outcome.message
+                    )
+                }
+            }
+        }
+        dialog.show()
     }
 
     private fun showAddEditDialog(config: ForwardConfig?) {
