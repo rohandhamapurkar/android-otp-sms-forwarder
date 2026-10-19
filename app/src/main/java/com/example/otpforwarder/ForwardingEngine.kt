@@ -40,7 +40,7 @@ object ForwardingEngine {
                 if (filter.isBlank()) continue
                 if (!body.contains(filter, ignoreCase = true)) continue
 
-                val otp = OtpUtils.extractOtp(body, filter) ?: continue
+                val otp = OtpUtils.extractOtp(body, filter, config.otpLength) ?: continue
 
                 outcomes += ForwardOutcome(
                     configId = config.id,

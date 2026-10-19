@@ -12,8 +12,9 @@ Android app that forwards extracted SMS codes using locally configured keyword r
 ## Matching behavior
 
 - Keywords match the incoming message body as case-insensitive substrings.
+- Each rule has an **OTP length** setting: **Auto (current matching)**, **4 digits**, or **6 digits**. Existing rules retain Auto after upgrading. Fixed-length rules search only for full codes of that length and never truncate longer numbers.
 - The matched keyword is removed before extraction, preventing numbers inside that keyword from being used as the code.
-- Codes of 4–8 digits near OTP/code/PIN/password words take priority. Otherwise the first standalone six-digit number, then four-digit number, is used.
+- In Auto mode, codes of 4–8 digits near OTP/code/PIN/password words take priority. Otherwise the first standalone six-digit number, then four-digit number, is used. Fixed-length rules keep keyword priority and use only their selected length for the fallback.
 - Each enabled rule produces at most one outgoing message. Multiple matching rules can forward to multiple destinations.
 - Outgoing text is `Prefix: code`. New rules require a prefix, at least one keyword, and a ten-digit destination number.
 - Multipart incoming SMS segments are assembled before matching. Long outgoing messages are split using the device's SMS encoding rules.

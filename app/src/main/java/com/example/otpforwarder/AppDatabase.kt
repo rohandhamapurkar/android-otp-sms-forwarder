@@ -6,8 +6,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [ForwardConfig::class], version = 1, exportSchema = true)
+@Database(entities = [ForwardConfig::class], version = 2, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun configDao(): ConfigDao
@@ -22,7 +23,12 @@ abstract class AppDatabase : RoomDatabase() {
          *         db.execSQL("ALTER TABLE forward_configs ADD COLUMN includeFilter INTEGER NOT NULL DEFAULT 0")
          *     }
          */
-        private val MIGRATIONS: Array<Migration> = emptyArray()
+        internal val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE forward_configs ADD COLUMN otpLength INTEGER")
+            }
+        }
+        private val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
 
         @Volatile
         private var INSTANCE: AppDatabase? = null

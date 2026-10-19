@@ -9,5 +9,7 @@ data class ForwardConfig(
     val forwardTo: String,
     val filterKeywords: List<String>,
     val messagePrefix: String,
-    val isEnabled: Boolean = true
+    val isEnabled: Boolean = true,
+    // null preserves the original automatic extraction behavior for existing rules.
+    val otpLength: Int? = null
 )

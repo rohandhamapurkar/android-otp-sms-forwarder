@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.EditText
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -91,6 +92,12 @@ class MainActivity : AppCompatActivity() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_edit_config, null)
         val editForwardTo = dialogView.findViewById<EditText>(R.id.editForwardTo)
         val editPrefix = dialogView.findViewById<EditText>(R.id.editPrefix)
+        val radioOtpLength = dialogView.findViewById<RadioGroup>(R.id.radioOtpLength)
+        radioOtpLength.check(when (config?.otpLength) {
+            4 -> R.id.otpLength4
+            6 -> R.id.otpLength6
+            else -> R.id.otpLengthAuto
+        })
         val editFilterKeyword = dialogView.findViewById<EditText>(R.id.editFilterKeyword)
         val btnAddKeyword = dialogView.findViewById<Button>(R.id.btnAddKeyword)
         val chipGroupKeywords = dialogView.findViewById<ChipGroup>(R.id.chipGroupKeywords)
@@ -166,6 +173,11 @@ class MainActivity : AppCompatActivity() {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val forwardTo = editForwardTo.text.toString().trim()
                 val prefix = editPrefix.text.toString().trim()
+                val otpLength = when (radioOtpLength.checkedRadioButtonId) {
+                    R.id.otpLength4 -> 4
+                    R.id.otpLength6 -> 6
+                    else -> null
+                }
 
                 val result = ConfigValidator.validate(forwardTo, prefix, keywords)
                 layoutForwardTo.error = result.forwardToError
@@ -175,9 +187,9 @@ class MainActivity : AppCompatActivity() {
                 if (!result.isValid) return@setOnClickListener
 
                 val newConfig = if (config == null) {
-                    ForwardConfig(forwardTo = forwardTo, filterKeywords = keywords.toList(), messagePrefix = prefix)
+                    ForwardConfig(forwardTo = forwardTo, filterKeywords = keywords.toList(), messagePrefix = prefix, otpLength = otpLength)
                 } else {
-                    config.copy(forwardTo = forwardTo, filterKeywords = keywords.toList(), messagePrefix = prefix)
+                    config.copy(forwardTo = forwardTo, filterKeywords = keywords.toList(), messagePrefix = prefix, otpLength = otpLength)
                 }
 
                 if (config == null) viewModel.insert(newConfig) else viewModel.update(newConfig)

@@ -36,7 +36,12 @@ class ConfigAdapter(
 
         fun bind(config: ForwardConfig) {
             textForwardTo.text = config.forwardTo
-            textFilters.text = "Filters: ${config.filterKeywords.joinToString(", ")}"
+            val lengthLabel = when (config.otpLength) {
+                4 -> itemView.context.getString(R.string.otp_length_four)
+                6 -> itemView.context.getString(R.string.otp_length_six)
+                else -> itemView.context.getString(R.string.otp_length_auto)
+            }
+            textFilters.text = "Filters: ${config.filterKeywords.joinToString(", ")}\nOTP: $lengthLabel"
             textPrefix.text = "Prefix: ${config.messagePrefix}"
             
             // Remove listener before setting state to avoid infinite loop

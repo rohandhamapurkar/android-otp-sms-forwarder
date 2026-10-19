@@ -20,6 +20,14 @@ object OtpUtils {
     private val OTP_6_PATTERN = Regex("""\b(\d{6})\b""")
     private val OTP_4_PATTERN = Regex("""\b(\d{4})\b""")
 
+    private val exactLengthPatterns = listOf(4, 6).associateWith { length ->
+        listOf(
+            Regex("""\b(?:$OTP_WORDS)\b[^\d\n]{0,25}?(\d{$length})(?!\d)""", RegexOption.IGNORE_CASE),
+            Regex("""(?<!\d)(\d{$length})(?!\d)[^\d\n]{0,25}?\b(?:$OTP_WORDS)\b""", RegexOption.IGNORE_CASE),
+            Regex("""\b(\d{$length})\b""")
+        )
+    }
+
     /**
      * Extracts a one-time code from the message body, provided the filter matches.
      *
@@ -30,12 +38,18 @@ object OtpUtils {
      * To avoid false positives, the search runs on the text with the matched filter removed
      * (e.g. a filter of "card ending 0366" must not contribute "0366" as the code).
      */
-    fun extractOtp(body: String, matchedFilter: String): String? {
+    fun extractOtp(body: String, matchedFilter: String, otpLength: Int? = null): String? {
         if (!body.contains(matchedFilter, ignoreCase = true)) {
             return null
         }
 
         val bodyWithoutFilter = body.replace(matchedFilter, " ", ignoreCase = true)
+
+        if (otpLength != null) {
+            // Search for a full code of the requested length, never a slice of a longer number.
+            val patterns = exactLengthPatterns[otpLength] ?: return null
+            return patterns.firstNotNullOfOrNull { it.find(bodyWithoutFilter)?.groupValues?.get(1) }
+        }
 
         return KEYWORD_BEFORE_PATTERN.find(bodyWithoutFilter)?.groupValues?.get(1)
             ?: KEYWORD_AFTER_PATTERN.find(bodyWithoutFilter)?.groupValues?.get(1)

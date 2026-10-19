@@ -1,4 +1,8 @@
 <resources>
+    <string name="otp_length">OTP length</string>
+    <string name="otp_length_auto">Auto (current matching)</string>
+    <string name="otp_length_four">4 digits</string>
+    <string name="otp_length_six">6 digits</string>
     <string name="app_name">OTPForwarder</string>
     <string name="master_enable_disable">Master Enable / Disable</string>
     <string name="include_matched_filter_in_message">Include Matched Filter in message</string>

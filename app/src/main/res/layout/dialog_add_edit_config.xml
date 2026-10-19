@@ -58,6 +58,39 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="@string/otp_length"
+            android:labelFor="@id/radioOtpLength"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/radioOtpLength"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checkedButton="@id/otpLengthAuto"
+            android:layout_marginBottom="12dp">
+
+            <RadioButton
+                android:id="@+id/otpLengthAuto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/otp_length_auto" />
+
+            <RadioButton
+                android:id="@+id/otpLength4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/otp_length_four" />
+
+            <RadioButton
+                android:id="@+id/otpLength6"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/otp_length_six" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Filter Keywords *"
             android:textStyle="bold"
             android:layout_marginBottom="4dp" />
