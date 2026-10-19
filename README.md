@@ -4,7 +4,7 @@ Android app that forwards extracted SMS codes using locally configured keyword r
 
 ## Setup
 
-1. Install the debug APK from a tagged [GitHub release](https://github.com/rohandhamapurkar/OTPForwarder/releases), or download the artifact from a completed [Actions run](https://github.com/rohandhamapurkar/OTPForwarder/actions/workflows/debug-apk.yml).
+1. Install the debug APK from a tagged [GitHub release](https://github.com/rohandhamapurkar/android-otp-sms-forwarder/releases), or download the artifact from a completed [Actions run](https://github.com/rohandhamapurkar/android-otp-sms-forwarder/actions/workflows/debug-apk.yml).
 2. Open the app and grant SMS permissions. Allow notifications to see forwarding failures.
 3. Add a rule with a ten-digit destination, message prefix, and one or more keywords. Tap **Add** for each keyword, then **Save**.
 4. Enable the rule and the master toggle. On dual-SIM devices, select a default SMS SIM in Android settings.
