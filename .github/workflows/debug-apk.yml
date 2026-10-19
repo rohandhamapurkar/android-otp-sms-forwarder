@@ -13,8 +13,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  release-checks:
+    name: Release checks
+    permissions:
+      contents: read
+    uses: ./.github/workflows/checks.yml
+
   build-debug-apk:
     name: Build debug APK
+    needs: release-checks
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -62,14 +69,14 @@ jobs:
           printf '%s' "$DEBUG_KEYSTORE_BASE64" | base64 --decode > .signing/debug.keystore
           keytool -list -keystore .signing/debug.keystore -storepass android -alias androiddebugkey > /dev/null
 
-      - name: Test and build debug APK
+      - name: Build debug APK
         run: |
           set -euo pipefail
           version_args=()
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             version_args+=("-PreleaseVersion=$GITHUB_REF_NAME")
           fi
-          ./gradlew :app:testDebugUnitTest :app:assembleDebug --stacktrace "${version_args[@]}"
+          ./gradlew :app:assembleDebug --stacktrace "${version_args[@]}"
 
       - name: Collect APK and checksum
         id: collect

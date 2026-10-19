@@ -57,6 +57,12 @@ Minimum supported Android API: 23. Target API: 36. The app uses Kotlin, Material
 
 ## GitHub debug APK builds
 
+### CI and release checks
+
+**Android Checks** runs on pushes to `main`, pull requests, and manual runs. It runs the JVM unit test suite, runs lint for both debug and release variants, builds the debug APK, and builds the optimized release APK with R8/resource shrinking. Test, lint, and release mapping reports are retained for 14 days, including reports produced before a failed check. This workflow needs no signing secrets, so pull requests can run it too.
+
+Every release/manual APK workflow first runs these same checks and only builds and publishes the persistent-key debug APK after they pass. The unsigned optimized release APK is checked but is not distributed. Device-only backup/restore and real SMS behavior still need device testing.
+
 Push any Git tag to run `.github/workflows/debug-apk.yml`. The workflow runs unit tests, builds and verifies the debug APK, uploads it as a workflow artifact for 30 days, and attaches the APK and SHA-256 checksum to a GitHub release for that tag.
 
 Pushing to `main` alone does not trigger an APK build. Push a new tag pointing to the desired commit, or use the manual Actions run.
