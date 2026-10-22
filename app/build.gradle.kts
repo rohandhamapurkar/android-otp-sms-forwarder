@@ -11,6 +11,7 @@ android {
         applicationId = "com.example.otpforwarder"
         minSdk = 23
         targetSdk = 36
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = 3
         versionName = providers.gradleProperty("releaseVersion").orElse("1.2.0").get()
     }
@@ -78,4 +79,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.livedata.ktx)
 
     testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
 }

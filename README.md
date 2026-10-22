@@ -41,7 +41,9 @@ Android backup and device transfer are enabled for the rules database (including
 
 If you delete app data and Android has no usable backup, the rules cannot be recovered. The first upgrade from the temporary signing keys used by v1.0.0/v1.1.0 still requires a fresh installation.
 
-Sending uses the device's default SMS subscription. Configure a default SMS SIM on dual-SIM devices. Send-result callbacks report modem/network failures through notifications when notification permission is available. A successful send result does not confirm delivery to the recipient. Debug builds display queued message contents; release builds only display failures.
+Sending uses the device's default SMS subscription. Configure a default SMS SIM on dual-SIM devices. Send-result callbacks replace each queued notification with **Sent** when every SMS part succeeds or **Failed** if any part fails. Failure details are shown in the expanded notification. **Sent** confirms sending, not delivery to the recipient. Queued/Sent notifications appear in debug builds; failure notifications appear in all builds when notification permission is available. If Android has not returned a result, the message remains queued.
+
+Each outgoing message has its own notification identity. Multipart progress is stored separately from backed-up settings so callbacks can complete after the app process restarts. This temporary state contains part indices and status only, not OTP text or destination numbers, and old entries are removed after 24 hours when the next message is submitted.
 
 ## Build and test
 
@@ -59,7 +61,7 @@ Minimum supported Android API: 23. Target API: 36. The app uses Kotlin, Material
 
 ### CI and release checks
 
-**Android Checks** runs on pushes to `main`, pull requests, and manual runs. It runs the JVM unit test suite, runs lint for both debug and release variants, builds the debug APK, and builds the optimized release APK with R8/resource shrinking. Test, lint, and release mapping reports are retained for 14 days, including reports produced before a failed check. This workflow needs no signing secrets, so pull requests can run it too.
+**Android Checks** runs on pushes to `main`, pull requests, and manual runs. It runs the JVM unit test suite, runs lint for both debug and release variants, builds the debug APK and Android test APK, and builds the optimized release APK with R8/resource shrinking. Test, lint, and release mapping reports are retained for 14 days, including reports produced before a failed check. This workflow needs no signing secrets, so pull requests can run it too.
 
 Every release/manual APK workflow first runs these same checks and only builds and publishes the persistent-key debug APK after they pass. The unsigned optimized release APK is checked but is not distributed. Device-only backup/restore and real SMS behavior still need device testing.
 
@@ -80,6 +82,8 @@ The first build with persistent signing requires one final uninstall of v1.0.0 o
 Debug builds show queued OTP contents in notifications. APK signing certificate details are included in the workflow summary and artifacts.
 
 Tests cover extraction, rule matching and formatting, validation, JSON conversion, and multipart assembly. Real SMS send callbacks and configuration migration should also be checked on a device before release.
+
+`SmsSendProgressTest` covers send-result aggregation. `SmsSendNotificationTest` runs on a connected Android device with notifications allowed, exercising real callback broadcasts and notification replacement using simulated modem results; it never sends SMS. Run it with `./gradlew connectedDebugAndroidTest` (set `ANDROID_SERIAL` if the same Wi-Fi phone appears under multiple ADB transports). CI compiles this test APK; running it requires a device or emulator.
 
 ## Permissions
 

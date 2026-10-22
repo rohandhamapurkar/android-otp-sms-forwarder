@@ -51,7 +51,7 @@ jobs:
           ./gradlew \
             :app:testDebugUnitTest \
             :app:lintDebug :app:lintRelease \
-            :app:assembleDebug :app:assembleRelease \
+            :app:assembleDebug :app:assembleDebugAndroidTest :app:assembleRelease \
             --stacktrace
 
       - name: Upload test and lint reports
